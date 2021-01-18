@@ -1,29 +1,21 @@
 import React, {useEffect, useState} from 'react';
+import {useSelector, useDispatch } from 'react-redux';
 import { SafeAreaView, View, FlatList, StyleSheet, Text, StatusBar, TouchableHighlight } from 'react-native';
+import { getAllMovies } from '../actions/moviesActions'
+
 
 export default function App(props) {
-  const [movies, setMovies] = useState([]);
-  const [page, setPage] = useState(1);
-  const [fetching, isFetching] = useState(false);
+  const dispatch = useDispatch();
+  const getMoviesRequest = () => dispatch(getAllMovies());
+  const isLoadding = useSelector(state =>  (state.isLoadding));
+  const movies = useSelector( state =>  state.movies);
 
-  const getMovies = async () => {
-    if (!fetching && page > 0) {
-      isFetching(true);
-      const request = await fetch(`http://localhost:5000/movie?limit=8&page=${page}`);
-      const newMovies = await request.json();
-      newMovies.length > 0 ? setPage(page +1) : setPage(-1); // @TODO refactor listing to get pagination info
-      setMovies([...movies, ...newMovies ])
-      isFetching(false);
-    }
-  }
   useEffect( () => {
-    getMovies();
+    getMoviesRequest()
   },[])
-
 
   const renderItem = ({ item }) => <Item title={item.name} movieId={item._id} />;
 
-  
 
   const Item = ({ title, movieId }) => (
   <TouchableHighlight
@@ -39,14 +31,14 @@ export default function App(props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
+      { !isLoadding && (<FlatList
         data={movies}
         renderItem={renderItem}
         keyExtractor={item => item._id}
-        onEndReached={getMovies}
+        onEndReached={getMoviesRequest}
         onEndReachedThreshold={0}
 
-      />
+      />)}
     </SafeAreaView>
   );
 }
